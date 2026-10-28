@@ -1,6 +1,8 @@
 import { Request, Response } from 'express'
 import bcrypt from 'bcrypt'
 import { pool } from '../config/env.js'
+import jwt from 'jsonwebtoken'
+import { JWT_SECRET } from '../config/env.js'
 
 export async function cadastrarUsuario(req: Request, res: Response) {
     const { login, senha, cargo } = req.body
@@ -64,7 +66,7 @@ export async function login(request:Request, response:Response){
 
     try{
         const resultado = await pool.query(
-            `SELECT id, senha_hash FROM usuario WHERE login = $1`,
+            `SELECT id, login, cargo, senha_hash FROM usuario WHERE login = $1`,
             [login]
         )
 
@@ -87,8 +89,23 @@ export async function login(request:Request, response:Response){
             })
         }
 
+        const token = jwt.sign(
+            {login: usuario.login, cargo: usuario.cargo},
+            JWT_SECRET,
+            {expiresIn: '7d'}
+        )
+
+        response.cookie('token', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        })
+
         return response.status(200).json({
-            message: 'Login efetuado com sucesso!'
+            message: 'Login efetuado com sucesso!',
+            login: usuario.login,
+            cargo: usuario.cargo
         })
     } catch (error){
         console.error(error)

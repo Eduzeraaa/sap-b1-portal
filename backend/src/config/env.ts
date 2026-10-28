@@ -8,3 +8,11 @@ export const pool = new Pool({
 })
 
 export const port = process.env.PORT
+
+const jwt_secret = process.env.JWT_SECRET
+
+if (!jwt_secret) {
+  throw new Error('JWT_SECRET is not defined')
+}
+
+export const JWT_SECRET: string = jwt_secret
