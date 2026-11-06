@@ -35,7 +35,7 @@ export async function solicitacaoCompra(request: Request, response: Response){
         const status = 'PENDENTE'
 
         const resultado = await client.query(
-            `INSERT INTO solicitacoes (solicitante, status, criado_em)
+            `INSERT INTO solicitacoes (id_solicitante, status, criado_em)
             VALUES ($1, $2, CURRENT_DATE)
             RETURNING id`,
             [solicitanteId, status]
