@@ -11,6 +11,7 @@ export async function getPurchaseRequests(request:Request, response:Response) {
                 u.login AS nome_solicitante,
                 s.id_solicitante,
                 i.id AS id_produto,
+                s.status AS status,
                 i.descricao AS descricao_produto,
                 i.quantidade AS quantidade_produto
             FROM solicitacoes s
@@ -44,7 +45,7 @@ export async function getPurchaseRequestById(request:Request, response:Response)
 
     if (!Number.isInteger(numericId) || numericId <= 0){
         return response.status(400).json({
-            message: `Erro no id da solicitação. Id recebido? ${id}`
+            message: `Erro no id da solicitação. Id recebido: ${id}`
         })
     }
 
@@ -56,6 +57,7 @@ export async function getPurchaseRequestById(request:Request, response:Response)
                 u.login AS nome_solicitante,
                 s.id_solicitante,
                 i.id AS id_produto,
+                s.status AS status,
                 i.descricao AS descricao_produto,
                 i.quantidade AS quantidade_produto
             FROM solicitacoes s
@@ -72,7 +74,7 @@ export async function getPurchaseRequestById(request:Request, response:Response)
         }
 
         return response.status(200).json({
-            solicitacao: getRequestById.rows[0]
+            solicitacao: getRequestById.rows
         })
 
     } catch(error){
@@ -82,4 +84,54 @@ export async function getPurchaseRequestById(request:Request, response:Response)
         })
     }
 
+}
+
+export async function filtrarStatus(request: Request, response: Response) {
+    
+    const { status } = request.params
+
+    if (status !== 'APROVADA' && status !== 'REJEITADA' && status !== 'PENDENTE'){
+        return response.status(400).json({
+            message: 'Erro no status.'
+        })
+    }
+
+    try{
+
+        const resultado = await pool.query(
+            `SELECT 
+                s.id AS id_solicitacao,
+                u.login AS nome_solicitante,
+                s.id_solicitante,
+                i.id AS id_produto,
+                s.status as status,
+                i.descricao AS descricao_produto,
+                i.quantidade AS quantidade_produto
+            FROM solicitacoes s
+            JOIN itens_solicitacao i ON i.solicitacao_id = s.id
+            JOIN usuario u ON s.id_solicitante = u.id
+            WHERE s.status = $1`,
+            [status]
+        )
+
+        if (resultado.rows.length === 0) {
+            return response.status(200).json({
+                message: 'Nenhuma solicitação encontrada para esse status.',
+                filtragem: []
+            })
+        }
+
+        return response.status(200).json({
+            message: 'Filtragem concluída!',
+            filtragem: resultado.rows
+        })
+
+    } catch(error){
+        console.error(error)
+
+        return response.status(500).json({
+            message: 'Erro interno do servidor'
+        })
+    }
+    
 }
