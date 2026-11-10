@@ -13,7 +13,8 @@ export async function getPurchaseRequests(request:Request, response:Response) {
                 i.id AS id_produto,
                 s.status AS status,
                 i.descricao AS descricao_produto,
-                i.quantidade AS quantidade_produto
+                i.quantidade AS quantidade_produto,
+                s.criado_em AS data_pedido
             FROM solicitacoes s
             JOIN itens_solicitacao i ON i.solicitacao_id = s.id
             JOIN usuario u ON s.id_solicitante = u.id`
@@ -59,7 +60,8 @@ export async function getPurchaseRequestById(request:Request, response:Response)
                 i.id AS id_produto,
                 s.status AS status,
                 i.descricao AS descricao_produto,
-                i.quantidade AS quantidade_produto
+                i.quantidade AS quantidade_produto,
+                s.criado_em AS data_pedido
             FROM solicitacoes s
             JOIN itens_solicitacao i ON i.solicitacao_id = s.id
             JOIN usuario u ON s.id_solicitante = u.id
@@ -106,7 +108,8 @@ export async function filtrarStatus(request: Request, response: Response) {
                 i.id AS id_produto,
                 s.status as status,
                 i.descricao AS descricao_produto,
-                i.quantidade AS quantidade_produto
+                i.quantidade AS quantidade_produto,
+                s.criado_em AS data_pedido
             FROM solicitacoes s
             JOIN itens_solicitacao i ON i.solicitacao_id = s.id
             JOIN usuario u ON s.id_solicitante = u.id
@@ -134,4 +137,84 @@ export async function filtrarStatus(request: Request, response: Response) {
         })
     }
     
+}
+
+export async function filterByUser(request: Request, response: Response){
+
+    const { id } = request.params
+
+    if (typeof id !== 'string') {
+        return response.status(400).json({
+            message: 'ID inválido.'
+        })
+    }
+
+    const numericId = Number(id)
+
+    if (!Number.isInteger(numericId) || numericId <= 0){
+        return response.status(400).json({
+            message: `Erro no id da solicitação. Id recebido: ${id}`
+        })
+    }
+
+    try {
+        
+        const resultado = await pool.query(
+            `SELECT
+                s.id AS id_solicitacao,
+                i.id AS id_produto,
+                s.status as status,
+                i.descricao AS descricao_produto,
+                i.quantidade AS quantidade_produto,
+                s.criado_em AS data_pedido
+            FROM solicitacoes s
+            JOIN itens_solicitacao i ON i.solicitacao_id = s.id
+            WHERE u.id = $1`,
+            [numericId]
+        )
+
+        return response.status(200).json({
+            message: 'Filtragem concluída!',
+            solicitacoes: resultado.rows
+        })
+
+    } catch(error){
+        console.error(error)
+
+        return response.status(500).json({
+            message: 'Erro interno do servidor'
+        })
+    }
+
+}
+
+export async function resumoPedidos(request: Request, response: Response){
+    
+    try {
+
+        const resultado = await pool.query(
+            `SELECT status, COUNT(status) as quantidade FROM solicitacoes
+            GROUP BY status`,
+        )
+
+        if (resultado.rows.length === 0) {
+            return response.status(200).json({
+                message: 'Nenhum pedido registrado.',
+                filtragem: []
+            })
+        }
+
+        return response.status(200).json({
+            message: 'Filtragem concluída!',
+            resumo: resultado.rows
+        })
+
+    } catch(error){
+        console.error(error)
+
+        return response.status(500).json({
+            message: 'Erro interno do servidor'
+        })
+    }
+
 }

@@ -8,7 +8,7 @@ export type UserPayload = {
 declare global {
   namespace Express {
     interface Request {
-      login?: UserPayload
+      user?: UserPayload
     }
   }
 }

@@ -15,7 +15,7 @@ CREATE TABLE usuario (
 CREATE TABLE solicitacoes (
     id              INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_solicitante  INTEGER NOT NULL REFERENCES usuario(id),
-    status          VARCHAR NOT NULL CHECK (status IN ('APROVADA', 'REJEITADA', 'PENDENTE')),
+    status          VARCHAR NOT NULL CHECK (status IN ('APROVADA', 'REJEITADA', 'PENDENTE', 'CANCELADA')),
     criado_em       DATE NOT NULL
 );
 

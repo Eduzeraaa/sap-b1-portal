@@ -11,7 +11,7 @@ export async function solicitacaoCompra(request: Request, response: Response){
         })
     }
 
-    if (!request.login?.login){
+    if (!request.user?.login){
         return response.status(401).json({
             message: 'Não autenticado'
         })
@@ -27,7 +27,7 @@ export async function solicitacaoCompra(request: Request, response: Response){
 
         const solicitante = await client.query(
             `SELECT id FROM usuario WHERE login = $1`,
-            [request.login?.login]
+            [request.user?.login]
         )
 
         const solicitanteId = solicitante.rows[0]?.id
@@ -109,6 +109,49 @@ export async function atualizarStatus(request: Request, response: Response){
     return response.status(200).json({
             message: 'Solicitação atualizada com sucesso!',
             solicitacao: resultado.rows[0]
+        })
+
+    } catch(error){
+        console.error(error)
+
+        return response.status(500).json({
+            message: 'Erro interno do servidor'
+        })
+    }
+
+}
+
+export async function cancelarSolicitacao(request: Request, response: Response) {
+
+    const { id } = request.params
+
+    const numericId:number = Number(id)
+
+    if (!Number.isInteger(numericId) || numericId <= 0){
+        return response.status(400).json({
+            message: `Erro no id da solicitação. Id recebido: ${id}`
+        })
+    }
+    
+    try {
+
+        const resultado = await pool.query(
+            `UPDATE solicitacoes
+            SET status = 'CANCELADA'
+            WHERE id = $1 AND status = 'PENDENTE'
+            RETURNING id, status`,
+            [numericId]
+        )
+
+        if (resultado.rowCount === 0) {
+            return response.status(409).json({
+                message: 'Solicitação inexistente ou não está pendente.'
+            })
+        }
+
+        return response.status(200).json({
+            message: 'Solicitação cancelada.',
+            confirmacao: resultado.rows[0]
         })
 
     } catch(error){

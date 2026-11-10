@@ -5,7 +5,7 @@ export function deptCompra(request: Request, response: Response, next: NextFunct
     const admin = 'admin'
     const deptCompra = 'COMPRAS'
 
-    if (request.login?.cargo !== deptCompra && request.login?.cargo !== admin){
+    if (request.user?.cargo !== deptCompra && request.user?.cargo !== admin){
         return response.status(403).json({ message: 'Acesso negado' })
     } 
 
@@ -17,7 +17,7 @@ export function ehAdmin(request: Request, response: Response, next: NextFunction
 
     const admin = 'admin'
 
-    if (request.login?.cargo !== admin){
+    if (request.user?.cargo !== admin){
         return response.status(403).json({ message: 'Acesso negado' })
     }
 

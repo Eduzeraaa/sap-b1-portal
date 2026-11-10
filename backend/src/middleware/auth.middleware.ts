@@ -15,7 +15,7 @@ export function verificarToken(request: Request, response: Response, next: NextF
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as UserPayload
-        request.login = decoded
+        request.user = decoded
         next()
     } catch (error) {
         return response.status(401).json({ message: 'Token inválido' })
